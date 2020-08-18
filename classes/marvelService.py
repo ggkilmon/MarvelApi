@@ -10,18 +10,22 @@ class MarvelService:
 
 
     def request(self, requestType, params={}):
+        params = self.addRequiredParams(params)
+        requestUrl = self.baseUrl + requestType
+        res = requests.get(url = requestUrl, params = params)
+        res = self.EnsureSuccessResponse(res)
+        response = res.json()
+        return response
+        
+    
+    def addRequiredParams(self, params):
         timestamp = self.getTimestamp()
         md5hash = self.generateHash(timestamp)
-
-        requestUrl = self.baseUrl + requestType
 
         params['ts'] = timestamp
         params['apikey'] = self.publicKey
         params['hash'] = md5hash
-
-        r = requests.get(url = requestUrl, params = params)
-        
-        return r.json()
+        return params
 
 
     def generateHash(self, timestamp):
@@ -31,3 +35,19 @@ class MarvelService:
 
     def getTimestamp(self):
         return str(datetime.now().time())
+
+    
+    def EnsureSuccessResponse(self, res):
+        print(res.status_code)
+        if res.status_code == 200:
+            return res
+        elif res.status_code == 409:
+            raise Exception('API: Authorization Error - Check API Key')
+        elif res.status_code == 401:
+            raise Exception('API: Authorization Error - Check API referer configuration')
+        elif res.status_code == 405:
+            raise Exception('API: Authorization Error - Method not allowed - {requestType}')
+        elif res.status_code == 403:
+            raise Exception('API: Authorization Error - Forbidden')
+        else:
+            raise Exception('API: Unknown Error')
