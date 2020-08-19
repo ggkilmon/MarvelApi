@@ -1,24 +1,24 @@
 from datetime import datetime
 import hashlib
-import requests
+from requests import Response, get
 
 class MarvelService:
-    def __init__(self, baseUrl, publicKey, privateKey):
+    def __init__(self, baseUrl: str, publicKey: str, privateKey: str):
         self.baseUrl = baseUrl
         self.publicKey = publicKey
         self.privateKey = privateKey
 
 
-    def request(self, requestType, params={}):
+    def request(self, requestType: str, params: dict={}):
         params = self.addRequiredParams(params)
         requestUrl = self.baseUrl + requestType
-        res = requests.get(url = requestUrl, params = params)
+        res = get(url = requestUrl, params = params)
         res = self.EnsureSuccessResponse(res)
         response = res.json()
         return response
         
     
-    def addRequiredParams(self, params):
+    def addRequiredParams(self, params: dict) -> dict:
         timestamp = self.getTimestamp()
         md5hash = self.generateHash(timestamp)
 
@@ -28,16 +28,16 @@ class MarvelService:
         return params
 
 
-    def generateHash(self, timestamp):
+    def generateHash(self, timestamp: str) -> str:
         hashString = timestamp + self.privateKey + self.publicKey
         return str(hashlib.md5(hashString.encode()).hexdigest())
     
 
-    def getTimestamp(self):
+    def getTimestamp(self) -> str:
         return str(datetime.now().time())
 
     
-    def EnsureSuccessResponse(self, res):
+    def EnsureSuccessResponse(self, res: Response) -> Response:
         print(res.status_code)
         if res.status_code == 200:
             return res
